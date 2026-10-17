@@ -24,6 +24,9 @@
 html,body{margin:0;background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{--chrome:309px}
+body.sub{--chrome:355px}
+body.view{--chrome:212px}
 .app{max-width:480px;margin:0 auto;padding:8px 12px calc(12px + env(safe-area-inset-bottom));
   display:flex;flex-direction:column;gap:8px;min-height:100dvh}
 .row{display:flex;gap:6px;align-items:center}
@@ -37,30 +40,52 @@ button.primary{background:var(--accent);border-color:var(--accent);color:var(--o
 input[type=text]{font:inherit;font-size:16px;color:var(--text);background:var(--surface);
   border:1px solid var(--border);border-radius:8px;height:38px;padding:0 10px;width:100%}
 input[type=text]:focus{outline:2px solid var(--accent);outline-offset:-1px}
-.modes{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+body.view #name{border-color:transparent;background:transparent;font-weight:600;padding:0 2px}
+body.view #name:focus{outline:none}
+body.view .edit-only{display:none !important}
+.modes{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .modes button{padding:0 2px;font-size:12px;flex-direction:column;gap:2px;height:42px}
 .court-wrap{display:flex;justify-content:center}
-#court{width:min(100%,calc((100dvh - 309px) * 0.532));min-width:200px;aspect-ratio:23/43.2;
+#court{--ar:0.532;width:min(100%,calc((100dvh - var(--chrome)) * var(--ar)));min-width:200px;aspect-ratio:23/43.2;
   display:block;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px}
+#court.half{--ar:1.018;aspect-ratio:23/22.6}
 #court .arrow-hit{pointer-events:none}
 #court.draw .arrow-hit{pointer-events:stroke}
 #court.draw .piece{pointer-events:none}
 #court.move .piece{cursor:grab}
 #court.draw{cursor:crosshair}
-#court .bubbles{pointer-events:none}
+#court .bubbles,#court .blocks{pointer-events:none}
 #court.bubble .bubbles{pointer-events:auto}
 #court.bubble .piece{pointer-events:none}
 #court.bubble{cursor:pointer}
-.frames{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:1px}
+#court.blockmode .blocks{pointer-events:auto}
+#court.blockmode .piece{pointer-events:none}
+#court.blockmode{cursor:pointer}
+.frames{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 1px}
 .frames::-webkit-scrollbar{display:none}
-.frames button{flex:0 0 auto;height:34px;font-size:13px}
+.frames button{flex:0 0 auto;height:34px;font-size:13px;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.frames button.lift{transform:scale(1.08);border-color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
 .sheet[hidden]{display:none}
 .sheet-body{background:var(--bg);width:100%;max-width:480px;max-height:80dvh;overflow:auto;
   border-radius:16px 16px 0 0;padding:14px 12px calc(16px + env(safe-area-inset-bottom))}
 .sheet h2{font-size:17px;font-weight:600;margin:0}
+.opt-label{font-size:13px;color:var(--sub);margin:14px 0 6px}
+.opt-hint{font-size:12px;color:var(--sub);margin-top:6px}
+.wide{width:100%}
 .item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:8px}
-.item .name{font-size:15px;font-weight:600;word-break:break-all}
+.item .name{font-size:15px;font-weight:600;word-break:break-all;flex:1;min-width:0}
+.item .head{display:flex;gap:8px;align-items:flex-start}
+.item button.handle{width:40px;height:34px;padding:0;font-size:18px;color:var(--sub);touch-action:none;cursor:grab;flex:0 0 auto}
+.folder{margin-top:10px}
+.folder-head{display:flex;gap:6px;align-items:center}
+.folder-head .toggle{flex:1;min-width:0;justify-content:flex-start;font-weight:600;font-size:15px;
+  background:transparent;border-color:transparent;padding:0 4px;overflow:hidden;text-overflow:ellipsis}
+.folder-head .count{color:var(--sub);font-weight:400}
+.folder-head .more{width:40px;padding:0}
+.folder-body{margin-left:8px;padding-left:8px;border-left:2px solid var(--border)}
+.folder-body .empty{padding:8px 4px}
+.item.lift{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.22);position:relative;z-index:1}
 .item .meta{font-size:12px;color:var(--sub);margin:2px 0 8px}
 .item button{height:34px;font-size:13px}
 .empty{color:var(--sub);font-size:14px;padding:16px 4px}
@@ -73,6 +98,8 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
 .dlg-body input{margin-bottom:14px}
 #dlgLink{font-size:14px}
 .dlg-err{color:var(--danger);font-size:13px;margin:-8px 0 12px}
+.choices{display:grid;gap:8px;margin-bottom:12px}
+.choices button{height:42px}
 #toast{position:fixed;left:50%;top:calc(100px + env(safe-area-inset-top));transform:translateX(-50%);
   background:#2c2c2a;color:#fff;font-size:14px;padding:9px 14px;border-radius:8px;
   max-width:calc(100% - 32px);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
@@ -83,17 +110,22 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
 <div class="app">
   <div class="row">
     <input type="text" id="name" class="grow" maxlength="60" aria-label="作戦名">
-    <button id="listBtn">一覧</button>
-    <button id="saveBtn">保存</button>
+    <button id="viewBtn">表示</button>
+    <button id="listBtn" class="edit-only">一覧</button>
+    <button id="saveBtn" class="edit-only">保存</button>
   </div>
 
-  <div class="modes" id="modes">
-    <button data-mode="move" class="on">移動</button>
-    <button data-mode="pass"><svg width="18" height="8" aria-hidden="true"><line x1="1" y1="4" x2="17" y2="4" stroke="#D99A00" stroke-width="2" stroke-dasharray="4 3"/></svg>パス</button>
-    <button data-mode="drib"><svg width="18" height="8" aria-hidden="true"><path d="M1 4q2-3 4 0t4 0 4 0 4 0" fill="none" stroke="#D85A30" stroke-width="2"/></svg>ドリブル</button>
-    <button data-mode="run"><svg width="18" height="8" aria-hidden="true"><line x1="1" y1="4" x2="17" y2="4" stroke="currentColor" stroke-width="2"/></svg>動き</button>
-    <button data-mode="shot"><svg width="18" height="8" aria-hidden="true"><path d="M1 4H12" stroke="#E53935" stroke-width="3"/><path d="M11 0L17 4L11 8Z" fill="#E53935"/></svg>シュート</button>
-    <button data-mode="bubble"><svg width="18" height="10" aria-hidden="true"><path d="M2 1H16Q17 1 17 2V6Q17 7 16 7H8L4 10V7H2Q1 7 1 6V2Q1 1 2 1Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>吹き出し</button>
+  <div class="modes edit-only" id="modes">
+    <button data-tool="move" class="on">移動</button>
+    <button data-tool="arrow"><svg width="18" height="8" aria-hidden="true"><path d="M1 4H12" stroke="currentColor" stroke-width="2"/><path d="M11 0L17 4L11 8Z" fill="currentColor"/></svg>矢印</button>
+    <button data-tool="bubble"><svg width="18" height="10" aria-hidden="true"><path d="M2 1H16Q17 1 17 2V6Q17 7 16 7H8L4 10V7H2Q1 7 1 6V2Q1 1 2 1Z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>吹き出し</button>
+    <button data-tool="block"><svg width="22" height="8" aria-hidden="true"><rect x="0.5" y="0.5" width="21" height="7" rx="2" fill="#C62828"/></svg>ブロック</button>
+  </div>
+  <div class="modes edit-only" id="arrowTypes" hidden>
+    <button data-type="pass" class="on"><svg width="18" height="8" aria-hidden="true"><line x1="1" y1="4" x2="17" y2="4" stroke="#D99A00" stroke-width="2" stroke-dasharray="4 3"/></svg>パス</button>
+    <button data-type="drib"><svg width="18" height="8" aria-hidden="true"><path d="M1 4q2-3 4 0t4 0 4 0 4 0" fill="none" stroke="#D85A30" stroke-width="2"/></svg>ドリブル</button>
+    <button data-type="run"><svg width="18" height="8" aria-hidden="true"><line x1="1" y1="4" x2="17" y2="4" stroke="currentColor" stroke-width="2"/></svg>動き</button>
+    <button data-type="shot"><svg width="18" height="8" aria-hidden="true"><path d="M1 4H12" stroke="#E53935" stroke-width="3"/><path d="M11 0L17 4L11 8Z" fill="#E53935"/></svg>シュート</button>
   </div>
 
   <div class="court-wrap">
@@ -116,6 +148,7 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
       </g>
       <g id="arrows"></g>
       <g id="pieces"></g>
+      <g id="blocks" class="blocks"></g>
       <g id="bubbles" class="bubbles"></g>
     </svg>
   </div>
@@ -124,19 +157,18 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
 
   <div class="frames" id="frames"></div>
 
-  <div class="row">
+  <div class="row edit-only">
     <button id="prevBtn" aria-label="コマを前へ移動" title="コマを前へ移動">◀</button>
     <button id="nextBtn" aria-label="コマを後ろへ移動" title="コマを後ろへ移動">▶</button>
     <button id="addBtn" class="grow">＋ コマ追加</button>
-    <button id="hideBtn" style="font-size:12px;padding:0 6px">動き矢印:表示</button>
     <button id="delBtn" class="danger">削除</button>
   </div>
 
   <div class="row">
     <button id="playBtn" class="primary grow">▶ 再生</button>
     <button id="speedBtn">普通</button>
-    <button id="undoBtn">↶ 戻す</button>
-    <button id="shareBtn">共有</button>
+    <button id="undoBtn" class="edit-only">↶ 戻す</button>
+    <button id="shareBtn" class="edit-only">共有</button>
   </div>
 </div>
 
@@ -144,10 +176,34 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
   <div class="sheet-body">
     <div class="row">
       <h2 class="grow">保存した作戦</h2>
-      <button id="newBtn">＋ 新規作成</button>
       <button id="closeBtn">閉じる</button>
     </div>
+    <div class="row" style="margin-top:10px">
+      <button id="newBtn" class="grow">＋ 新しい作戦</button>
+      <button id="newFolderBtn" class="grow">＋ フォルダ</button>
+    </div>
     <div id="list"></div>
+  </div>
+</div>
+<div class="sheet" id="viewSheet" hidden>
+  <div class="sheet-body">
+    <div class="row">
+      <h2 class="grow">表示</h2>
+      <button id="viewClose">閉じる</button>
+    </div>
+    <div class="opt-label">コート</div>
+    <div class="row">
+      <button id="fullBtn" class="grow">全体コート</button>
+      <button id="halfBtn" class="grow">ハーフコート</button>
+    </div>
+    <div class="opt-label">拡大</div>
+    <button id="zoomReset" class="wide">元の大きさに戻す</button>
+    <div class="opt-hint">コートを2本指で広げると拡大、つまむと縮小、2本指のまま動かすと表示位置が動きます。</div>
+    <div class="opt-label">再生中の「動き」の矢印</div>
+    <div class="row">
+      <button id="runShow" class="grow">表示</button>
+      <button id="runHide" class="grow">非表示</button>
+    </div>
   </div>
 </div>
 <div class="dlg" id="dlg" hidden>
@@ -156,6 +212,7 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
     <input type="text" id="dlgLink" readonly hidden aria-label="共有リンク">
     <input type="text" id="dlgText" maxlength="30" hidden aria-label="吹き出しの文字">
     <div class="dlg-err" id="dlgErr" hidden></div>
+    <div class="choices" id="dlgChoices" hidden></div>
     <div class="row">
       <button id="dlgExtra" class="danger" hidden>削除</button>
       <button id="dlgCancel" class="grow">やめる</button>
@@ -175,10 +232,13 @@ const ARROW = {
   run:  {color: '#FFFFFF', dash: null, w: 0.22, hl: 0.75, hw: 0.42},
   shot: {color: '#FF3B3B', dash: null, w: 0.42, hl: 1.15, hw: 0.75}
 };
+const PASS_OPEN = '#5BE38A';
 const straight = t => t === 'pass' || t === 'shot';
 const SPEEDS = [{label: 'ゆっくり', ms: 2000}, {label: '普通', ms: 1200}, {label: '速い', ms: 700}];
 const KEY_SAVED = 'futsalBoard.saved';
 const KEY_DRAFT = 'futsalBoard.draft';
+const KEY_FOLDERS = 'futsalBoard.folders';
+const KEY_CLOSED = 'futsalBoard.closedFolders';
 
 // 駒の並び: 0-4 味方(0はGK), 5-9 相手(5はGK), 10 ボール
 function defaultPos() {
@@ -186,13 +246,14 @@ function defaultPos() {
           10,2,  10,9,  4,14, 16,14, 10,18,
           10,20.6];
 }
+const newFrame = p => ({p, a: [], b: [], k: [], m: ''});
 function newTactic() {
-  return {id: null, name: '新しい作戦', hideRun: false, frames: [{p: defaultPos(), a: [], b: [], m: ''}]};
+  return {id: null, name: '新しい作戦', hideRun: false, half: false, frames: [newFrame(defaultPos())]};
 }
 
 let T = newTactic();
 let cur = 0, mode = 'move', dirty = false, playing = false, speed = 1;
-let shareUrl = null;
+let shareCode = null, viewOnly = false;
 
 const $ = id => document.getElementById(id);
 const svg = $('court'), gArrows = $('arrows'), gPieces = $('pieces');
@@ -277,10 +338,18 @@ function drawArrow(a, parent, k) {
   const g = el('g', {}, parent);
   const {d, head} = arrowGeom(a);
   const st = ARROW[a.t];
+  const color = a.t === 'pass' && a.s === 1 ? PASS_OPEN : st.color;
   el('path', {d, fill: 'none', stroke: 'rgba(0,0,0,.28)', 'stroke-width': st.w + 0.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'pointer-events': 'none'}, g);
-  const line = el('path', {d, fill: 'none', stroke: st.color, 'stroke-width': st.w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'pointer-events': 'none'}, g);
+  const line = el('path', {d, fill: 'none', stroke: color, 'stroke-width': st.w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'pointer-events': 'none'}, g);
   if (st.dash) line.setAttribute('stroke-dasharray', st.dash);
-  el('path', {d: head, fill: st.color, stroke: 'rgba(0,0,0,.28)', 'stroke-width': 0.08, 'pointer-events': 'none'}, g);
+  el('path', {d: head, fill: color, stroke: 'rgba(0,0,0,.28)', 'stroke-width': 0.08, 'pointer-events': 'none'}, g);
+  if (a.t === 'pass' && a.s === 2) {
+    // パスコースがないときは、線の真ん中に✖を付ける
+    const p0 = a.pts[0], p1 = a.pts[a.pts.length-1], mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2, r = 0.55;
+    const x = `M${f2(mx-r)},${f2(my-r)}L${f2(mx+r)},${f2(my+r)}M${f2(mx+r)},${f2(my-r)}L${f2(mx-r)},${f2(my+r)}`;
+    el('path', {d: x, stroke: '#fff', 'stroke-width': 0.42, 'stroke-linecap': 'round', fill: 'none', 'pointer-events': 'none'}, g);
+    el('path', {d: x, stroke: '#E53935', 'stroke-width': 0.24, 'stroke-linecap': 'round', fill: 'none', 'pointer-events': 'none'}, g);
+  }
   if (k != null) el('path', {d, class: 'arrow-hit', 'data-k': k, fill: 'none', stroke: 'transparent', 'stroke-width': 1.4}, g);
   return g;
 }
@@ -330,15 +399,16 @@ function links(f) {
     return best;
   };
   for (const a of f.a) {
+    if (a.t === 'pass' && a.s === 2) continue;  // 通らないパスではボールは動かない
     const s = a.pts[0], path = movePath(a);
     if (a.t !== 'run') { const b = near(10, 11, s, 2.5); if (b >= 0) res.push({i: b, path, a}); }
     if (a.t === 'run' || a.t === 'drib') { const q = near(0, 10, s, 2.0); if (q >= 0) res.push({i: q, path, a}); }
   }
   return res;
 }
-// コマiからコマi+1へ、割合kのときの全駒の位置
+// コマiから次のコマへ(最後のコマは矢印の先へ)、割合kのときの全駒の位置
 function framePos(i, k) {
-  const a = T.frames[i].p, b = T.frames[i+1].p;
+  const a = T.frames[i].p, b = i + 1 < T.frames.length ? T.frames[i+1].p : nextPos(T.frames[i]);
   const out = a.map((v, j) => v + (b[j] - v) * k);
   for (const l of links(T.frames[i])) {
     const P = pointAt(l.path, k), s = l.path[0], e = l.path[l.path.length-1], j = l.i;
@@ -368,6 +438,7 @@ function renderArrows() {
   // 「非表示」のときは、再生中だけ動きの矢印を描かない(駒は矢印に沿って動く)
   const hide = playing && T.hideRun;
   T.frames[cur].a.forEach((a, k) => { if (!(hide && a.t === 'run')) drawArrow(a, gArrows, k); });
+  renderBlocks();
   renderBubbles();
 }
 
@@ -379,7 +450,10 @@ function renderFrames() {
     const b = document.createElement('button');
     if (i === cur) b.className = 'on';
     b.textContent = 'コマ' + (i + 1) + (f.m ? ' ✎' : '');
-    b.onclick = () => { stop(); select(i); };
+    b.onclick = () => {
+      if (suppressClick) { suppressClick = false; return; }
+      stop(); select(i);
+    };
     box.appendChild(b);
   });
   const on = box.children[cur];
@@ -398,13 +472,17 @@ function select(i) {
 }
 function renderAll() {
   $('name').value = T.name;
-  $('hideBtn').textContent = '動き矢印:' + (T.hideRun ? '非表示' : '表示');
-  $('hideBtn').classList.toggle('on', T.hideRun);
+  $('fullBtn').classList.toggle('on', !T.half);
+  $('halfBtn').classList.toggle('on', T.half);
+  $('runShow').classList.toggle('on', !T.hideRun);
+  $('runHide').classList.toggle('on', T.hideRun);
+  applyCourt();
   select(cur);
   updateSaveBtn();
 }
 function updateSaveBtn() { $('saveBtn').textContent = dirty ? '保存 •' : '保存'; }
 function markDirty() {
+  if (viewOnly) return;
   dirty = true;
   updateSaveBtn();
   saveDraft();
@@ -417,8 +495,71 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
+
+// ---------- コートの表示(全体/ハーフ、拡大) ----------
+let vb = null, shownHalf = null;
+const baseVB = () => T.half ? {x: -1.5, y: -1.6, w: 23, h: 22.6} : {x: -1.5, y: -1.6, w: 23, h: 43.2};
+function applyVB() { svg.setAttribute('viewBox', `${f2(vb.x)} ${f2(vb.y)} ${f2(vb.w)} ${f2(vb.h)}`); }
+function resetZoom() { vb = baseVB(); applyVB(); }
+function applyCourt() {
+  if (shownHalf === T.half) return;
+  shownHalf = T.half;
+  svg.classList.toggle('half', T.half);
+  resetZoom();
+}
+// 画面上の点(fx, fy は要素内の割合)を基準に、幅 w へ拡大・縮小する
+function zoomTo(w, ax, ay, fx, fy) {
+  const base = baseVB();
+  w = Math.max(base.w / 4, Math.min(base.w, w));
+  const h = w * base.h / base.w;
+  const x = Math.max(base.x, Math.min(base.x + base.w - w, ax - fx * w));
+  const y = Math.max(base.y, Math.min(base.y + base.h - h, ay - fy * h));
+  vb = {x, y, w, h};
+  applyVB();
+}
+const pointers = new Map();
+let pinch = null, pinchLock = false;
+function startPinch() {
+  const [a, b] = [...pointers.values()], r = svg.getBoundingClientRect();
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, fx = (mx - r.left) / r.width, fy = (my - r.top) / r.height;
+  pinch = {d0: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, w0: vb.w, ax: vb.x + fx * vb.w, ay: vb.y + fy * vb.h};
+}
+function updatePinch() {
+  const [a, b] = [...pointers.values()], r = svg.getBoundingClientRect();
+  const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  zoomTo(pinch.w0 * pinch.d0 / d, pinch.ax, pinch.ay, (mx - r.left) / r.width, (my - r.top) / r.height);
+}
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+  zoomTo(vb.w * (e.deltaY > 0 ? 1.12 : 1 / 1.12), vb.x + fx * vb.w, vb.y + fy * vb.h, fx, fy);
+}, {passive: false});
+
+$('viewBtn').onclick = () => { stop(); $('viewSheet').hidden = false; };
+$('viewClose').onclick = () => { $('viewSheet').hidden = true; };
+$('viewSheet').addEventListener('click', e => { if (e.target === $('viewSheet')) $('viewSheet').hidden = true; });
+function setHalf(h) {
+  if (T.half === h) return;
+  pushUndo();
+  T.half = h;
+  renderAll();
+  markDirty();
+}
+$('fullBtn').onclick = () => setHalf(false);
+$('halfBtn').onclick = () => setHalf(true);
+$('zoomReset').onclick = () => { resetZoom(); $('viewSheet').hidden = true; };
+function setHideRun(h) {
+  if (T.hideRun === h) return;
+  pushUndo();
+  T.hideRun = h;
+  renderAll();
+  markDirty();
+}
+$('runShow').onclick = () => setHideRun(false);
+$('runHide').onclick = () => setHideRun(true);
 
 // ---------- 吹き出し ----------
 const gBubbles = $('bubbles');
@@ -488,13 +629,32 @@ async function editBubble(k) {
   markDirty();
 }
 
+// ---------- ブロック(「block」と書いた横長の棒) ----------
+const gBlocks = $('blocks');
+function renderBlocks() {
+  gBlocks.textContent = '';
+  (T.frames[cur].k || []).forEach((q, k) => {
+    const g = el('g', {class: 'block', 'data-k': k, transform: `translate(${f2(q.x)},${f2(q.y)})`}, gBlocks);
+    el('rect', {x: -1.7, y: -0.42, width: 3.4, height: 0.84, rx: 0.3, fill: '#C62828', stroke: '#fff', 'stroke-width': 0.1}, g);
+    const t = el('text', {'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 0.62, 'font-weight': 'bold',
+      fill: '#fff', 'letter-spacing': 0.04, 'pointer-events': 'none'}, g);
+    t.textContent = 'block';
+  });
+}
+
 // ---------- 確認画面 ----------
 // ブラウザ標準の confirm() はアプリ内ブラウザで出ないことがあるため、画面内に出す
 let dlgDone = null;
+function resetDlg() {
+  for (const id of ['dlgLink', 'dlgText', 'dlgErr', 'dlgExtra', 'dlgChoices']) $(id).hidden = true;
+  $('dlgOk').hidden = false;
+  $('dlgCancel').hidden = false;
+}
 // 結果は {ok, extra, text}。text を渡すと文字の入力欄を出す
-function openDlg({msg, ok, okClass, cancel, link, text, extra}) {
+function openDlg({msg, ok, okClass, cancel, link, text, extra, placeholder}) {
   return new Promise(res => {
     const hasText = text != null;
+    resetDlg();
     $('dlgMsg').textContent = msg;
     $('dlgOk').textContent = ok;
     $('dlgOk').className = 'grow ' + okClass;
@@ -505,8 +665,7 @@ function openDlg({msg, ok, okClass, cancel, link, text, extra}) {
     $('dlgLink').value = link || '';
     $('dlgText').hidden = !hasText;
     $('dlgText').value = text || '';
-    $('dlgText').placeholder = '例:ここでフリーになる';
-    $('dlgErr').hidden = true;
+    $('dlgText').placeholder = placeholder || '例:ここでフリーになる';
     $('dlg').hidden = false;
     dlgDone = (okd, ex) => {
       const t = $('dlgText').value.trim();
@@ -516,6 +675,26 @@ function openDlg({msg, ok, okClass, cancel, link, text, extra}) {
     };
     if (link) { $('dlgLink').focus(); $('dlgLink').select(); }
     if (hasText) $('dlgText').focus();
+  });
+}
+// いくつかの選択肢から1つ選ぶ。やめたときは null
+function openChoice(msg, opts) {
+  return new Promise(res => {
+    resetDlg();
+    $('dlgMsg').textContent = msg;
+    $('dlgOk').hidden = true;
+    const box = $('dlgChoices');
+    box.textContent = '';
+    box.hidden = false;
+    for (const o of opts) {
+      const b = document.createElement('button');
+      b.textContent = o.label;
+      if (o.cls) b.className = o.cls;
+      b.onclick = () => dlgDone && dlgDone(false, false, o.key);
+      box.appendChild(b);
+    }
+    $('dlg').hidden = false;
+    dlgDone = (okd, ex, key) => { $('dlg').hidden = true; dlgDone = null; res(key || null); };
   });
 }
 async function ask(msg, okLabel, danger) {
@@ -537,7 +716,7 @@ let undoStack = [], lastTextKey = null;
 // 変更の直前に呼ぶ。文字入力は同じ欄への連続入力を1回分にまとめる
 function pushUndo(textKey) {
   if (textKey && textKey === lastTextKey) return;
-  undoStack.push({name: T.name, hideRun: T.hideRun, frames: structuredClone(T.frames), cur});
+  undoStack.push({name: T.name, hideRun: T.hideRun, half: T.half, frames: structuredClone(T.frames), cur});
   if (undoStack.length > 50) undoStack.shift();
   lastTextKey = textKey || null;
 }
@@ -550,6 +729,7 @@ $('undoBtn').onclick = () => {
   lastTextKey = null;
   T.name = u.name;
   T.hideRun = u.hideRun;
+  T.half = u.half;
   T.frames = u.frames;
   cur = Math.min(u.cur, T.frames.length - 1);
   renderAll();
@@ -557,7 +737,46 @@ $('undoBtn').onclick = () => {
   toast('戻しました');
 };
 
-// ---------- 操作 ----------
+// ---------- 道具の切り替え ----------
+let tool = 'move', arrowType = 'pass';
+const TOOL_HINT = {
+  bubble: '指したい場所をタップすると、吹き出しを置けます。丸印と吹き出しはドラッグで動かせます',
+  block: 'タップした場所にブロックのマークを置けます。ドラッグで動かし、タップで消せます'
+};
+const TYPE_HINT = {
+  pass: 'なぞってパスを描きます。パスの矢印をタップすると、通る/通らないを選べます',
+  drib: 'なぞってドリブルを描きます。矢印をタップすると消えます',
+  run: 'なぞって選手の動きを描きます。矢印をタップすると消えます',
+  shot: 'ボールをタップすると、ゴールへのシュートを自動で引きます。なぞって好きな方向にも描けます'
+};
+function applyMode() {
+  mode = tool === 'arrow' ? arrowType : tool;
+  for (const x of $('modes').children) x.classList.toggle('on', x.dataset.tool === tool);
+  for (const x of $('arrowTypes').children) x.classList.toggle('on', x.dataset.type === arrowType);
+  $('arrowTypes').hidden = tool !== 'arrow';
+  document.body.classList.toggle('sub', tool === 'arrow' && !viewOnly);
+  svg.classList.toggle('move', tool === 'move');
+  svg.classList.toggle('draw', tool === 'arrow');
+  svg.classList.toggle('bubble', tool === 'bubble');
+  svg.classList.toggle('blockmode', tool === 'block');
+}
+$('modes').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  tool = b.dataset.tool;
+  applyMode();
+  if (tool === 'arrow') toast(TYPE_HINT[arrowType]);
+  else if (TOOL_HINT[tool]) toast(TOOL_HINT[tool]);
+});
+$('arrowTypes').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  arrowType = b.dataset.type;
+  applyMode();
+  toast(TYPE_HINT[arrowType]);
+});
+
+// ---------- コート上の操作 ----------
 function svgPt(e) {
   const pt = svg.createSVGPoint();
   pt.x = e.clientX; pt.y = e.clientY;
@@ -566,11 +785,23 @@ function svgPt(e) {
 }
 const clampX = x => Math.max(-0.8, Math.min(20.8, x));
 const clampY = y => Math.max(-1, Math.min(41, y));
-let drag = null, draw = null, bdrag = null;
+let drag = null, draw = null, bdrag = null, kdrag = null;
 
+// 2本目の指が触れたら、1本指の操作をやめて拡大・縮小に切り替える
+function cancelSingle() {
+  if (drag) { if (drag.moved) markDirty(); drag = null; }
+  if (draw) { if (draw.g) draw.g.remove(); draw = null; }
+  if (bdrag) { if (bdrag.moved) markDirty(); bdrag = null; }
+  if (kdrag) { if (kdrag.moved) markDirty(); kdrag = null; }
+}
 svg.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  try { svg.setPointerCapture(e.pointerId); } catch {}
+  e.preventDefault();
+  if (pointers.size === 2) { cancelSingle(); startPinch(); return; }
+  if (pointers.size > 2 || pinchLock || viewOnly) return;
   if (playing) stop();
-  if (drag || draw || bdrag) return;
+  if (drag || draw || bdrag || kdrag) return;
   const [x, y] = svgPt(e);
   if (mode === 'move') {
     const g = e.target.closest('.piece');
@@ -584,14 +815,19 @@ svg.addEventListener('pointerdown', e => {
     const k = pt ? +pt.dataset.k : box ? +box.dataset.k : null;
     const b = k != null ? T.frames[cur].b[k] : null;
     bdrag = {k, part: pt ? 'pt' : box ? 'box' : 'new', sx: x, sy: y, o: b ? {...b} : null, id: e.pointerId, moved: false};
+  } else if (mode === 'block') {
+    const g = e.target.closest('.block');
+    const k = g ? +g.dataset.k : null;
+    kdrag = {k, sx: x, sy: y, o: k != null ? {...T.frames[cur].k[k]} : null, id: e.pointerId, moved: false};
   } else {
     const hit = e.target.closest('.arrow-hit');
     draw = {pts: [[clampX(x), clampY(y)]], hit: hit ? +hit.dataset.k : null, id: e.pointerId, g: null};
   }
-  svg.setPointerCapture(e.pointerId);
-  e.preventDefault();
 });
 svg.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinch) { if (pointers.size >= 2) updatePinch(); return; }
   if (drag && e.pointerId === drag.id) {
     if (!drag.moved) pushUndo();
     const [x, y] = svgPt(e), p = T.frames[cur].p, i = drag.i;
@@ -614,6 +850,15 @@ svg.addEventListener('pointermove', e => {
       b.x = o.x + dx; b.y = o.y + dy; b.bx = o.bx + dx; b.by = o.by + dy;
     }
     renderBubbles();
+  } else if (kdrag && e.pointerId === kdrag.id) {
+    const [x, y] = svgPt(e);
+    if (!kdrag.moved && Math.hypot(x - kdrag.sx, y - kdrag.sy) < 0.4) return;
+    if (kdrag.k == null) return;
+    if (!kdrag.moved) pushUndo();
+    kdrag.moved = true;
+    const q = T.frames[cur].k[kdrag.k];
+    q.x = clampX(kdrag.o.x + x - kdrag.sx); q.y = clampY(kdrag.o.y + y - kdrag.sy);
+    renderBlocks();
   } else if (draw && e.pointerId === draw.id) {
     const [x, y] = svgPt(e), q = [clampX(x), clampY(y)];
     if (dist(q, draw.pts[draw.pts.length-1]) < 0.25) return;
@@ -632,6 +877,33 @@ function simplify(pts) {
   for (let i = 0; i < 40; i++) res.push(out[Math.round(i * (out.length - 1) / 39)]);
   return res;
 }
+// ボールの位置から相手ゴール(上)の奥へ。シュートを打つ位置から見て遠い側のポスト寄りを狙う
+// 自陣の深い位置(下側4分の1)にボールがあるときだけ、下のゴールへ打つ
+function autoShot(tap) {
+  const p = T.frames[cur].p, ball = [p[20], p[21]];
+  if (dist(tap, ball) > 2.5) { toast('ボールの近くをタップすると、シュートを打てます'); return; }
+  const top = T.half || ball[1] < 30;
+  const target = [ball[0] < 10 ? 11.1 : 8.9, top ? -0.5 : 40.5];
+  pushUndo();
+  T.frames[cur].a.push({t: 'shot', pts: [ball, target]});
+  renderArrows();
+  markDirty();
+  toast('シュートの矢印を引きました');
+}
+async function passMenu(k) {
+  const key = await openChoice('このパスコースは？', [
+    {key: 'open', label: '通る(緑で表示)'},
+    {key: 'shut', label: '通らない(✖を付ける)'},
+    {key: 'plain', label: 'ふつう(黄色)'},
+    {key: 'del', label: '削除', cls: 'danger'}
+  ]);
+  if (!key) return;
+  pushUndo();
+  if (key === 'del') T.frames[cur].a.splice(k, 1);
+  else T.frames[cur].a[k].s = {open: 1, shut: 2, plain: 0}[key];
+  renderArrows();
+  markDirty();
+}
 function endPointer(e, commit) {
   if (drag && e.pointerId === drag.id) {
     if (drag.moved) markDirty();
@@ -642,12 +914,27 @@ function endPointer(e, commit) {
     if (!commit) return;
     if (d.part === 'new') { const [x, y] = svgPt(e); addBubble(clampX(x), clampY(y)); }
     else editBubble(d.k);
+  } else if (kdrag && e.pointerId === kdrag.id) {
+    const d = kdrag; kdrag = null;
+    if (d.moved) { markDirty(); return; }
+    if (!commit) return;
+    pushUndo();
+    if (d.k == null) T.frames[cur].k.push({x: clampX(d.sx), y: clampY(d.sy)});
+    else { T.frames[cur].k.splice(d.k, 1); toast('ブロックを消しました(「戻す」で元に戻せます)'); }
+    renderBlocks();
+    markDirty();
   } else if (draw && e.pointerId === draw.id) {
     const d = draw; draw = null;
     if (d.g) d.g.remove();
     if (!commit) return;
     if (pathLen(d.pts) < 0.8) {
-      if (d.hit != null) { pushUndo(); T.frames[cur].a.splice(d.hit, 1); renderArrows(); markDirty(); }
+      // シュートのときは、ボールの近くのタップを優先する(ボールから出ている矢印より先に)
+      const p = T.frames[cur].p;
+      if (mode === 'shot' && dist(d.pts[0], [p[20], p[21]]) <= 1.5) autoShot(d.pts[0]);
+      else if (d.hit != null) {
+        if (T.frames[cur].a[d.hit].t === 'pass') { passMenu(d.hit); return; }
+        pushUndo(); T.frames[cur].a.splice(d.hit, 1); renderArrows(); markDirty();
+      } else if (mode === 'shot') autoShot(d.pts[0]);
       return;
     }
     pushUndo();
@@ -656,20 +943,18 @@ function endPointer(e, commit) {
     markDirty();
   }
 }
-svg.addEventListener('pointerup', e => endPointer(e, true));
-svg.addEventListener('pointercancel', e => endPointer(e, false));
-
-$('modes').addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  mode = b.dataset.mode;
-  for (const x of $('modes').children) x.classList.toggle('on', x === b);
-  svg.classList.toggle('move', mode === 'move');
-  svg.classList.toggle('draw', mode !== 'move' && mode !== 'bubble');
-  svg.classList.toggle('bubble', mode === 'bubble');
-  if (mode === 'bubble') toast('指したい場所をタップすると、吹き出しを置けます。丸印と吹き出しはドラッグで動かせます');
-  else if (mode !== 'move') toast('コートをなぞって矢印を描きます。矢印をタップすると消えます');
-});
+function pointerEnd(e, commit) {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pinch) {
+    if (pointers.size < 2) { pinch = null; pinchLock = pointers.size > 0; }
+    return;
+  }
+  if (pinchLock) { if (!pointers.size) pinchLock = false; return; }
+  endPointer(e, commit);
+}
+svg.addEventListener('pointerup', e => pointerEnd(e, true));
+svg.addEventListener('pointercancel', e => pointerEnd(e, false));
 
 $('name').addEventListener('input', e => { pushUndo('name'); T.name = e.target.value; markDirty(); });
 $('memo').addEventListener('input', e => {
@@ -680,10 +965,11 @@ $('memo').addEventListener('input', e => {
   markDirty();
 });
 
+// ---------- コマの操作 ----------
 $('addBtn').onclick = () => {
   stop();
   pushUndo();
-  T.frames.splice(cur + 1, 0, {p: nextPos(T.frames[cur]), a: [], b: [], m: ''});
+  T.frames.splice(cur + 1, 0, newFrame(nextPos(T.frames[cur])));
   select(cur + 1);
   markDirty();
   toast('コマ' + (cur + 1) + 'を追加しました。駒を次の位置へ動かしてください');
@@ -697,23 +983,71 @@ $('delBtn').onclick = async () => {
   select(Math.min(cur, T.frames.length - 1));
   markDirty();
 };
-function moveFrame(dir) {
+function reorderFrame(from, to) {
+  if (from === to || to < 0 || to >= T.frames.length) { renderFrames(); return; }
   stop();
-  const j = cur + dir;
-  if (j < 0 || j >= T.frames.length) return;
   pushUndo();
-  [T.frames[cur], T.frames[j]] = [T.frames[j], T.frames[cur]];
-  select(j);
+  const [f] = T.frames.splice(from, 1);
+  T.frames.splice(to, 0, f);
+  select(to);
   markDirty();
 }
-$('prevBtn').onclick = () => moveFrame(-1);
-$('nextBtn').onclick = () => moveFrame(1);
+$('prevBtn').onclick = () => reorderFrame(cur, cur - 1);
+$('nextBtn').onclick = () => reorderFrame(cur, cur + 1);
+
+// コマのボタンを長押ししてから横へドラッグすると、順番を入れ替えられる
+let fdrag = null, suppressClick = false;
+const framesBox = $('frames');
+framesBox.addEventListener('pointerdown', e => {
+  const b = e.target.closest('button');
+  if (!b || viewOnly || fdrag) return;
+  const d = {from: [...framesBox.children].indexOf(b), b, x0: e.clientX, y0: e.clientY, id: e.pointerId, active: false};
+  d.timer = setTimeout(() => {
+    if (fdrag !== d) return;
+    d.active = true;
+    b.classList.add('lift');
+    try { framesBox.setPointerCapture(d.id); } catch {}
+    if (navigator.vibrate) navigator.vibrate(15);
+  }, 350);
+  fdrag = d;
+});
+framesBox.addEventListener('pointermove', e => {
+  const d = fdrag;
+  if (!d || e.pointerId !== d.id) return;
+  if (!d.active) {
+    if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 8) { clearTimeout(d.timer); fdrag = null; }
+    return;
+  }
+  const others = [...framesBox.children].filter(x => x !== d.b);
+  const before = others.find(x => { const r = x.getBoundingClientRect(); return e.clientX < r.left + r.width / 2; });
+  framesBox.insertBefore(d.b, before || null);
+  // 端に近づいたら一覧を自動で送る
+  const r = framesBox.getBoundingClientRect();
+  if (e.clientX < r.left + 24) framesBox.scrollLeft -= 8;
+  else if (e.clientX > r.right - 24) framesBox.scrollLeft += 8;
+});
+function endFrameDrag(e, commit) {
+  const d = fdrag;
+  if (!d || e.pointerId !== d.id) return;
+  clearTimeout(d.timer);
+  fdrag = null;
+  if (!d.active) return;
+  suppressClick = true;
+  setTimeout(() => { suppressClick = false; }, 400);
+  if (!commit) { renderFrames(); return; }
+  reorderFrame(d.from, [...framesBox.children].indexOf(d.b));
+}
+framesBox.addEventListener('pointerup', e => endFrameDrag(e, true));
+window.addEventListener('pointerup', e => endFrameDrag(e, true));
+framesBox.addEventListener('pointercancel', e => endFrameDrag(e, false));
+framesBox.addEventListener('touchmove', e => { if (fdrag && fdrag.active) e.preventDefault(); }, {passive: false});
+framesBox.addEventListener('contextmenu', e => e.preventDefault());
 
 // ---------- 再生 ----------
 let raf = null;
 const ease = k => k * k * (3 - 2 * k);
 function play() {
-  if (T.frames.length < 2) { toast('コマを2つ以上作ると再生できます'); return; }
+  if (T.frames.length < 2 && !links(T.frames[0]).length) { toast('コマを2つ以上作るか、矢印を描くと再生できます'); return; }
   playing = true;
   $('playBtn').textContent = '❚❚ 停止';
   $('memo').readOnly = true;
@@ -722,13 +1056,18 @@ function play() {
   const tick = now => {
     if (!playing) return;
     const D = SPEEDS[speed].ms, H = D * 0.5, el = now - t0;
+    const hasNext = cur < T.frames.length - 1;
+    // 最後のコマに矢印があれば、矢印の先まで動かして終わる(シュートでボールがゴールへ入るなど)
+    const tail = !hasNext && links(T.frames[cur]).length > 0;
     if (el < H) {
       // コマで一旦止める
-    } else if (cur < T.frames.length - 1 && el < H + D) {
+    } else if ((hasNext || tail) && el < H + D) {
       setPos(framePos(cur, ease((el - H) / D)));
-    } else if (cur < T.frames.length - 1) {
+    } else if (hasNext) {
       select(cur + 1);
       t0 = now;
+    } else if (tail && el < H + D * 2) {
+      setPos(framePos(cur, 1));
     } else {
       stop();
       return;
@@ -742,19 +1081,11 @@ function stop() {
   playing = false;
   cancelAnimationFrame(raf);
   $('playBtn').textContent = '▶ 再生';
-  $('memo').readOnly = false;
+  $('memo').readOnly = viewOnly;
   setPos(T.frames[cur].p);
   renderArrows();
 }
 $('playBtn').onclick = () => playing ? stop() : play();
-$('hideBtn').onclick = () => {
-  stop();
-  pushUndo();
-  T.hideRun = !T.hideRun;
-  renderAll();
-  markDirty();
-  toast(T.hideRun ? '再生中は動きの矢印を隠します' : '再生中も動きの矢印を表示します');
-};
 $('speedBtn').onclick = () => {
   speed = (speed + 1) % SPEEDS.length;
   $('speedBtn').textContent = SPEEDS[speed].label;
@@ -763,10 +1094,12 @@ $('speedBtn').onclick = () => {
 // ---------- 保存形式 ----------
 const r10 = v => Math.round(v * 10);
 function pack(t) {
-  return {v: 1, n: t.name, ...(t.hideRun ? {h: 1} : {}), f: t.frames.map(f => {
+  return {v: 1, n: t.name, ...(t.hideRun ? {h: 1} : {}), ...(t.half ? {c: 1} : {}), f: t.frames.map(f => {
     const o = {p: f.p.map(r10)};
-    if (f.a.length) o.a = f.a.map(a => [TYPES.indexOf(a.t), ...a.pts.flatMap(q => [r10(q[0]), r10(q[1])])]);
+    // 種類の番号の10の位に、パスコースの状態(1:通る 2:通らない)を入れる
+    if (f.a.length) o.a = f.a.map(a => [TYPES.indexOf(a.t) + 10 * (a.s || 0), ...a.pts.flatMap(q => [r10(q[0]), r10(q[1])])]);
     if (f.b && f.b.length) o.b = f.b.map(b => [r10(b.x), r10(b.y), r10(b.bx), r10(b.by), b.t]);
+    if (f.k && f.k.length) o.k = f.k.map(q => [r10(q.x), r10(q.y)]);
     if (f.m) o.m = f.m;
     return o;
   })};
@@ -779,6 +1112,7 @@ function unpack(o) {
     id: null,
     name: String(o.n || '作戦').slice(0, 60),
     hideRun: o.h === 1,
+    half: o.c === 1,
     frames: o.f.slice(0, 200).map(f => {
       const src = Array.isArray(f.p) && f.p.length === 22 ? f.p : def.map(r10);
       const p = src.map((v, i) => i % 2 ? num(v, -1, 41, def[i]) : num(v, -0.8, 20.8, def[i]));
@@ -786,13 +1120,16 @@ function unpack(o) {
         if (!Array.isArray(x) || x.length < 5) return null;
         const pts = [];
         for (let i = 1; i + 1 < x.length && pts.length < 40; i += 2) pts.push([num(x[i], -0.8, 20.8, 10), num(x[i+1], -1, 41, 20)]);
-        return {t: TYPES[x[0]] || 'run', pts};
+        const c = Number(x[0]) || 0, t = TYPES[c % 10] || 'run', s = Math.floor(c / 10);
+        return t === 'pass' && (s === 1 || s === 2) ? {t, pts, s} : {t, pts};
       }).filter(Boolean);
       const b = (Array.isArray(f.b) ? f.b : []).slice(0, 20).map(x => Array.isArray(x) && x.length >= 5 ? {
         x: num(x[0], -0.8, 20.8, 10), y: num(x[1], -1, 41, 20),
         bx: num(x[2], -1, 21, 10), by: num(x[3], -1.2, 41.2, 20), t: String(x[4]).slice(0, 30)
       } : null).filter(x => x && x.t);
-      return {p, a, b, m: String(f.m || '').slice(0, 200)};
+      const k = (Array.isArray(f.k) ? f.k : []).slice(0, 30).filter(Array.isArray)
+        .map(x => ({x: num(x[0], -0.8, 20.8, 10), y: num(x[1], -1, 41, 20)}));
+      return {p, a, b, k, m: String(f.m || '').slice(0, 200)};
     })
   };
 }
@@ -807,13 +1144,22 @@ function writeSaved(list) {
   catch { toast('保存できませんでした(ブラウザの保存領域が使えません)'); return false; }
 }
 function saveDraft() {
+  if (viewOnly) return;
   try { localStorage.setItem(KEY_DRAFT, JSON.stringify({id: T.id, dirty, d: pack(T)})); } catch {}
 }
 function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-function saveCurrent() {
-  const list = readSaved();
+async function saveCurrent() {
+  const old = T.id ? readSaved().find(x => x.id === T.id) : null;
+  let folder = old ? old.folder : undefined;
+  if (!old) {
+    // 初めて保存するときは、保存先のフォルダを選ぶ
+    const f = await pickFolder('どのフォルダに保存しますか？', null);
+    if (f === null) return;
+    folder = f || undefined;
+  }
   if (!T.id) T.id = newId();
-  const entry = {id: T.id, name: T.name, updated: Date.now(), d: pack(T)};
+  const entry = {id: T.id, name: T.name, updated: Date.now(), d: pack(T), ...(folder ? {folder} : {})};
+  const list = readSaved();
   const i = list.findIndex(x => x.id === T.id);
   if (i >= 0) list[i] = entry; else list.unshift(entry);
   if (!writeSaved(list)) return;
@@ -835,50 +1181,220 @@ function openTactic(t, id, isDirty) {
   saveDraft();
   scheduleShare();
 }
+// ---------- フォルダ ----------
+// フォルダは {id, name} の並び。作戦の folder が空なら「未分類」
+function readJSON(key, def) {
+  try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? def : v; } catch { return def; }
+}
+function writeJSON(key, v) {
+  try { localStorage.setItem(key, JSON.stringify(v)); return true; }
+  catch { toast('保存できませんでした(ブラウザの保存領域が使えません)'); return false; }
+}
+const readFolders = () => { const v = readJSON(KEY_FOLDERS, []); return Array.isArray(v) ? v.filter(f => f && f.id) : []; };
+const readClosed = () => { const v = readJSON(KEY_CLOSED, []); return Array.isArray(v) ? v : []; };
+// 作戦のフォルダが消えていたら「未分類」として扱う
+function folderOf(it, folders) { return it.folder && folders.some(f => f.id === it.folder) ? it.folder : ''; }
+async function askFolderName(value) {
+  const r = await openDlg({msg: value ? 'フォルダの名前を変える' : '新しいフォルダの名前を入力してください',
+    ok: '決定', okClass: 'primary', cancel: true, text: value || '', placeholder: '例:セットプレー'});
+  return r.ok ? r.text : null;
+}
+async function createFolder() {
+  const name = await askFolderName('');
+  if (name == null) return null;
+  const id = newId();
+  if (!writeJSON(KEY_FOLDERS, [...readFolders(), {id, name}])) return null;
+  return id;
+}
+// フォルダを選ぶ。未分類は ''、やめたときは null。except のフォルダは選択肢から外す
+async function pickFolder(msg, except) {
+  const opts = readFolders().filter(f => f.id !== except).map(f => ({key: 'f:' + f.id, label: f.name}));
+  if (except !== '') opts.push({key: 'f:', label: '未分類'});
+  opts.push({key: 'new', label: '＋ 新しいフォルダを作る'});
+  const key = await openChoice(msg, opts);
+  if (!key) return null;
+  if (key === 'new') return await createFolder();
+  return key.slice(2);
+}
+async function folderMenu(f) {
+  const key = await openChoice('フォルダ「' + f.name + '」', [
+    {key: 'rename', label: '名前を変える'},
+    {key: 'delete', label: 'フォルダを削除', cls: 'danger'}
+  ]);
+  if (key === 'rename') {
+    const name = await askFolderName(f.name);
+    if (name == null) return;
+    writeJSON(KEY_FOLDERS, readFolders().map(x => x.id === f.id ? {...x, name} : x));
+  } else if (key === 'delete') {
+    const n = readSaved().filter(x => x.folder === f.id).length;
+    if (!await ask('フォルダ「' + f.name + '」を削除しますか？' + (n ? '中の作戦(' + n + 'つ)は消えずに「未分類」へ移ります。' : ''), '削除する', true)) return;
+    // 中の作戦は消さずに未分類へ移す
+    writeSaved(readSaved().map(x => { if (x.folder !== f.id) return x; const y = {...x}; delete y.folder; return y; }));
+    writeJSON(KEY_FOLDERS, readFolders().filter(x => x.id !== f.id));
+  } else return;
+  renderList();
+}
+function toggleFolder(id) {
+  const closed = readClosed();
+  writeJSON(KEY_CLOSED, closed.includes(id) ? closed.filter(x => x !== id) : [...closed, id]);
+  renderList();
+}
+
 function renderList() {
   const box = $('list');
   box.textContent = '';
-  const list = readSaved();
-  if (!list.length) {
+  const list = readSaved(), folders = readFolders(), closed = readClosed();
+  if (!list.length && !folders.length) {
     const p = document.createElement('div');
     p.className = 'empty';
     p.textContent = 'まだ保存した作戦はありません。作戦を作って「保存」を押すと、ここに並びます。';
     box.appendChild(p);
     return;
   }
-  for (const it of list) {
-    const card = document.createElement('div');
-    card.className = 'item';
-    const n = document.createElement('div');
-    n.className = 'name';
-    n.textContent = it.name + (it.id === T.id ? '(表示中)' : '');
-    const m = document.createElement('div');
-    m.className = 'meta';
-    const frames = it.d && Array.isArray(it.d.f) ? it.d.f.length : 0;
-    m.textContent = 'コマ' + frames + ' ・ ' + new Date(it.updated).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-    const row = document.createElement('div');
-    row.className = 'row';
-    const mk = (label, fn, cls) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = fn; row.appendChild(b); };
-    mk('開く', async () => {
-      if (it.id !== T.id && !await confirmDiscard()) return;
-      try { openTactic(unpack(it.d), it.id, false); } catch { toast('この作戦は開けませんでした'); return; }
-      $('sheet').hidden = true;
-    }, 'grow');
-    mk('複製', () => {
-      const l = readSaved();
-      l.unshift({id: newId(), name: it.name + ' のコピー', updated: Date.now(), d: it.d});
-      if (writeSaved(l)) { renderList(); toast('複製しました'); }
-    });
-    mk('削除', async () => {
-      if (!await ask('「' + it.name + '」を削除しますか？', '削除する', true)) return;
-      writeSaved(readSaved().filter(x => x.id !== it.id));
-      if (T.id === it.id) { T.id = null; markDirty(); }
-      renderList();
-    }, 'danger');
-    card.append(n, m, row);
-    box.appendChild(card);
+  const sections = [...folders.map(f => ({id: f.id, name: f.name, f})), {id: '', name: '未分類'}];
+  for (const sec of sections) {
+    const items = list.filter(it => folderOf(it, folders) === sec.id);
+    // 未分類が空のときは、フォルダだけを見せる
+    if (sec.id === '' && !items.length && folders.length) continue;
+    const isOpen = !closed.includes(sec.id);
+    const wrap = document.createElement('div');
+    wrap.className = 'folder';
+    const head = document.createElement('div');
+    head.className = 'folder-head';
+    const tg = document.createElement('button');
+    tg.className = 'toggle';
+    tg.textContent = (isOpen ? '▼ ' : '▶ ') + sec.name + ' ';
+    const cnt = document.createElement('span');
+    cnt.className = 'count';
+    cnt.textContent = '(' + items.length + ')';
+    tg.appendChild(cnt);
+    tg.setAttribute('aria-expanded', String(isOpen));
+    tg.onclick = () => toggleFolder(sec.id);
+    head.appendChild(tg);
+    if (sec.f) {
+      const more = document.createElement('button');
+      more.className = 'more';
+      more.textContent = '…';
+      more.setAttribute('aria-label', 'フォルダ「' + sec.name + '」の操作');
+      more.onclick = () => folderMenu(sec.f);
+      head.appendChild(more);
+    }
+    wrap.appendChild(head);
+    if (isOpen) {
+      const body = document.createElement('div');
+      body.className = 'folder-body';
+      body.dataset.folder = sec.id;
+      if (!items.length) {
+        const p = document.createElement('div');
+        p.className = 'empty';
+        p.textContent = '作戦はまだありません。作戦の「移動」から、このフォルダへ移せます。';
+        body.appendChild(p);
+      }
+      for (const it of items) body.appendChild(itemCard(it, sec.id));
+      wrap.appendChild(body);
+    }
+    box.appendChild(wrap);
   }
 }
+function itemCard(it, folderId) {
+  const card = document.createElement('div');
+  card.className = 'item';
+  card.dataset.id = it.id;
+  const head = document.createElement('div');
+  head.className = 'head';
+  const handle = document.createElement('button');
+  handle.className = 'handle';
+  handle.textContent = '≡';
+  handle.setAttribute('aria-label', '「' + it.name + '」を並べ替える');
+  const n = document.createElement('div');
+  n.className = 'name';
+  n.textContent = it.name + (it.id === T.id ? '(表示中)' : '');
+  const m = document.createElement('div');
+  m.className = 'meta';
+  const frames = it.d && Array.isArray(it.d.f) ? it.d.f.length : 0;
+  m.textContent = 'コマ' + frames + ' ・ ' + new Date(it.updated).toLocaleString('ja-JP', {month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+  const row = document.createElement('div');
+  row.className = 'row';
+  const mk = (label, fn, cls) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = fn; row.appendChild(b); };
+  mk('開く', async () => {
+    if (it.id !== T.id && !await confirmDiscard()) return;
+    try { openTactic(unpack(it.d), it.id, false); } catch { toast('この作戦は開けませんでした'); return; }
+    $('sheet').hidden = true;
+  }, 'grow');
+  mk('複製', () => {
+    const l = readSaved();
+    l.unshift({id: newId(), name: it.name + ' のコピー', updated: Date.now(), d: it.d, ...(folderId ? {folder: folderId} : {})});
+    if (writeSaved(l)) { renderList(); toast('複製しました'); }
+  });
+  mk('移動', async () => {
+    const f = await pickFolder('「' + it.name + '」をどのフォルダへ移しますか？', folderId);
+    if (f === null) return;
+    writeSaved(readSaved().map(x => { if (x.id !== it.id) return x; const y = {...x}; if (f) y.folder = f; else delete y.folder; return y; }));
+    // 移した先のフォルダを開いて見せる
+    writeJSON(KEY_CLOSED, readClosed().filter(x => x !== f));
+    renderList();
+    toast('移しました');
+  });
+  mk('削除', async () => {
+    if (!await ask('「' + it.name + '」を削除しますか？', '削除する', true)) return;
+    writeSaved(readSaved().filter(x => x.id !== it.id));
+    if (T.id === it.id) { T.id = null; markDirty(); }
+    renderList();
+  }, 'danger');
+  head.append(n, handle);
+  card.append(head, m, row);
+  return card;
+}
+// 作戦のつまみ(≡)を押したまま上下にドラッグすると、同じフォルダの中で順番を入れ替えられる
+let ldrag = null;
+const listBox = $('list'), sheetBody = $('sheet').querySelector('.sheet-body');
+listBox.addEventListener('pointerdown', e => {
+  const h = e.target.closest('.handle');
+  if (!h || ldrag) return;
+  const card = h.closest('.item');
+  ldrag = {card, body: card.parentElement, id: e.pointerId};
+  card.classList.add('lift');
+  // カードはドラッグ中に移動するので、動かない一覧の枠でマウスや指を追いかける
+  try { listBox.setPointerCapture(e.pointerId); } catch {}
+  e.preventDefault();
+});
+listBox.addEventListener('pointermove', e => {
+  if (!ldrag || e.pointerId !== ldrag.id) return;
+  const others = [...ldrag.body.querySelectorAll(':scope > .item')].filter(x => x !== ldrag.card);
+  const before = others.find(x => { const r = x.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+  if (before) { if (before !== ldrag.card.nextSibling) ldrag.body.insertBefore(ldrag.card, before); }
+  else if (ldrag.card !== ldrag.body.lastElementChild) ldrag.body.appendChild(ldrag.card);
+  // 上下の端に近づいたら自動でスクロールする
+  const r = sheetBody.getBoundingClientRect();
+  if (e.clientY < r.top + 40) sheetBody.scrollTop -= 10;
+  else if (e.clientY > r.bottom - 40) sheetBody.scrollTop += 10;
+});
+function endListDrag(e) {
+  if (!ldrag || e.pointerId !== ldrag.id) return;
+  const {card, body} = ldrag;
+  card.classList.remove('lift');
+  ldrag = null;
+  // 動かしたフォルダの作戦だけを、画面の順番に並べ直す(ほかの作戦の位置はそのまま)
+  const order = [...body.querySelectorAll(':scope > .item')].map(x => x.dataset.id);
+  const list = readSaved();
+  const slots = list.map((x, i) => order.includes(x.id) ? i : -1).filter(i => i >= 0);
+  const moved = order.map(id => list.find(x => x.id === id)).filter(Boolean);
+  if (moved.length === slots.length) {
+    const next = list.slice();
+    slots.forEach((slot, k) => { next[slot] = moved[k]; });
+    if (next.some((x, i) => x !== list[i])) writeSaved(next);
+  }
+  renderList();
+}
+listBox.addEventListener('pointerup', endListDrag);
+listBox.addEventListener('pointercancel', endListDrag);
+// 追いかけが外れても、どこで離したかに関係なくドラッグを終える
+listBox.addEventListener('lostpointercapture', endListDrag);
+window.addEventListener('pointerup', endListDrag);
+$('newFolderBtn').onclick = async () => {
+  const id = await createFolder();
+  if (id) { renderList(); toast('フォルダを作りました'); }
+};
 $('listBtn').onclick = () => { stop(); renderList(); $('sheet').hidden = false; };
 $('closeBtn').onclick = () => { $('sheet').hidden = true; };
 $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) $('sheet').hidden = true; });
@@ -920,11 +1436,11 @@ async function decode(s) {
 const baseUrl = () => location.href.split('#')[0];
 let shareTimer = null;
 function scheduleShare() {
-  shareUrl = null;
+  shareCode = null;
   clearTimeout(shareTimer);
   shareTimer = setTimeout(async () => {
     const snap = T, code = await encode(T);
-    if (snap === T) shareUrl = baseUrl() + '#t=' + code;
+    if (snap === T) shareCode = code;
   }, 300);
 }
 function copyLink(url) {
@@ -933,22 +1449,49 @@ function copyLink(url) {
     navigator.clipboard.writeText(url).then(() => toast('共有リンクをコピーしました。LINEなどに貼り付けて送れます'), fallback);
   } else fallback();
 }
-$('shareBtn').onclick = () => {
+// #t= は編集もできるリンク、#v= は見るだけのリンク
+$('shareBtn').onclick = async () => {
   stop();
-  const url = shareUrl || baseUrl() + '#t=' + 'j' + b64u(jsonBytes(T));
+  const kind = await openChoice('どちらのリンクを作りますか？', [
+    {key: 'v', label: '見るだけ(再生だけできる)'},
+    {key: 't', label: '編集もできる'}
+  ]);
+  if (!kind) return;
+  const url = baseUrl() + '#' + kind + '=' + (shareCode || 'j' + b64u(jsonBytes(T)));
+  const label = kind === 'v' ? '(見るだけ)' : '';
   if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    navigator.share({title: T.name, text: 'フットサル作戦「' + T.name + '」', url})
+    navigator.share({title: T.name, text: 'フットサル作戦「' + T.name + '」' + label, url})
       .catch(err => { if (err.name !== 'AbortError') copyLink(url); });
   } else copyLink(url);
 };
 
+function enterView() {
+  viewOnly = true;
+  document.body.classList.add('view');
+  $('name').readOnly = true;
+  $('memo').readOnly = true;
+  tool = 'move';
+  applyMode();
+}
 async function loadFromHash() {
-  const h = location.hash.match(/^#t=([A-Za-z0-9_-]+)$/);
+  const h = location.hash.match(/^#([tv])=([A-Za-z0-9_-]+)$/);
   if (!h) return false;
-  history.replaceState(null, '', baseUrl());
+  if (viewOnly && h[1] === 't') { location.reload(); return false; }
+  // 見るだけのリンクは、開き直しても同じ表示になるようにURLを残す
+  if (h[1] === 't') history.replaceState(null, '', baseUrl());
   let t;
-  try { t = await decode(h[1]); }
+  try { t = await decode(h[2]); }
   catch { toast('共有リンクを読み込めませんでした'); return false; }
+  if (h[1] === 'v') {
+    enterView();
+    stop();
+    T = t; cur = 0;
+    resetUndo();
+    renderAll();
+    toast('見るだけモードで開きました');
+    setTimeout(play, 700);
+    return true;
+  }
   if (dirty) {
     // 保存していない作業は、消さずに一覧へ退避する
     const list = readSaved();
@@ -964,10 +1507,14 @@ window.addEventListener('hashchange', loadFromHash);
 
 // ---------- 起動 ----------
 (async () => {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY_DRAFT));
-    if (d && d.d) { T = unpack(d.d); T.id = d.id || null; dirty = !!d.dirty; }
-  } catch {}
+  if (/^#v=/.test(location.hash)) enterView();
+  else {
+    try {
+      const d = JSON.parse(localStorage.getItem(KEY_DRAFT));
+      if (d && d.d) { T = unpack(d.d); T.id = d.id || null; dirty = !!d.dirty; }
+    } catch {}
+  }
+  applyMode();
   renderAll();
   scheduleShare();
   await loadFromHash();
