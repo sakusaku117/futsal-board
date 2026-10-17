@@ -110,6 +110,7 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
 <div class="app">
   <div class="row">
     <input type="text" id="name" class="grow" maxlength="60" aria-label="作戦名">
+    <button id="bundleBtn" hidden>作戦一覧</button>
     <button id="viewBtn">表示</button>
     <button id="listBtn" class="edit-only">一覧</button>
     <button id="saveBtn" class="edit-only">保存</button>
@@ -175,12 +176,13 @@ button.danger-fill{background:var(--danger);border-color:var(--danger);color:var
 <div class="sheet" id="sheet" hidden>
   <div class="sheet-body">
     <div class="row">
-      <h2 class="grow">保存した作戦</h2>
+      <h2 class="grow" id="sheetTitle">保存した作戦</h2>
       <button id="closeBtn">閉じる</button>
     </div>
-    <div class="row" style="margin-top:10px">
+    <div class="row edit-only" style="margin-top:10px">
       <button id="newBtn" class="grow">＋ 新しい作戦</button>
       <button id="newFolderBtn" class="grow">＋ フォルダ</button>
+      <button id="bundleShareBtn" class="grow">まとめて共有</button>
     </div>
     <div id="list"></div>
   </div>
@@ -1421,18 +1423,21 @@ function unb64u(s) {
 async function pipe(u, stream) {
   return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(stream)).arrayBuffer());
 }
-const jsonBytes = t => new TextEncoder().encode(JSON.stringify(pack(t)));
-async function encode(t) {
+const objBytes = o => new TextEncoder().encode(JSON.stringify(o));
+const jsonBytes = t => objBytes(pack(t));
+async function encodeObj(o) {
   if ('CompressionStream' in window) {
-    try { return 'z' + b64u(await pipe(jsonBytes(t), new CompressionStream('deflate-raw'))); } catch {}
+    try { return 'z' + b64u(await pipe(objBytes(o), new CompressionStream('deflate-raw'))); } catch {}
   }
-  return 'j' + b64u(jsonBytes(t));
+  return 'j' + b64u(objBytes(o));
 }
-async function decode(s) {
+async function decodeObj(s) {
   const u = unb64u(s.slice(1));
   const bytes = s[0] === 'z' ? await pipe(u, new DecompressionStream('deflate-raw')) : u;
-  return unpack(JSON.parse(new TextDecoder().decode(bytes)));
+  return JSON.parse(new TextDecoder().decode(bytes));
 }
+const encode = t => encodeObj(pack(t));
+const decode = async s => unpack(await decodeObj(s));
 const baseUrl = () => location.href.split('#')[0];
 let shareTimer = null;
 function scheduleShare() {
@@ -1458,12 +1463,95 @@ $('shareBtn').onclick = async () => {
   ]);
   if (!kind) return;
   const url = baseUrl() + '#' + kind + '=' + (shareCode || 'j' + b64u(jsonBytes(T)));
-  const label = kind === 'v' ? '(見るだけ)' : '';
-  if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    navigator.share({title: T.name, text: 'フットサル作戦「' + T.name + '」' + label, url})
-      .catch(err => { if (err.name !== 'AbortError') copyLink(url); });
-  } else copyLink(url);
+  sendLink(url, T.name, 'フットサル作戦「' + T.name + '」' + (kind === 'v' ? '(見るだけ)' : ''));
 };
+function sendLink(url, title, text) {
+  if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    navigator.share({title, text, url}).catch(err => { if (err.name !== 'AbortError') copyLink(url); });
+  } else copyLink(url);
+}
+
+// ---------- まとめて共有(#l= は一覧ごとの見るだけリンク) ----------
+// 形式: {v, n:題名, g:[フォルダ名], t:[[フォルダの番号(なしは-1), 作戦]]}
+$('bundleShareBtn').onclick = async () => {
+  const list = readSaved(), folders = readFolders();
+  if (!list.length) { toast('保存した作戦がまだありません'); return; }
+  const opts = [{key: 'all', label: 'すべての作戦(' + list.length + ')'}];
+  for (const f of folders) {
+    const n = list.filter(x => folderOf(x, folders) === f.id).length;
+    if (n) opts.push({key: 'f:' + f.id, label: f.name + '(' + n + ')'});
+  }
+  const un = list.filter(x => !folderOf(x, folders)).length;
+  if (un && folders.length) opts.push({key: 'f:', label: '未分類(' + un + ')'});
+  const key = await openChoice('どの作戦を「見るだけ」で共有しますか？', opts);
+  if (!key) return;
+  const fid = key === 'all' ? null : key.slice(2);
+  const items = list.filter(x => fid === null || folderOf(x, folders) === fid);
+  const used = folders.filter(f => fid === null ? items.some(x => folderOf(x, folders) === f.id) : f.id === fid);
+  const title = fid === null ? 'すべての作戦' : fid ? used[0].name : '未分類';
+  const obj = {v: 1, n: title, g: used.map(f => f.name), t: items.map(x => [used.findIndex(f => f.id === folderOf(x, folders)), x.d])};
+  const url = baseUrl() + '#l=' + await encodeObj(obj);
+  if (url.length > 8000) toast('リンクがとても長いため、送れないアプリがあります。フォルダごとの共有がおすすめです');
+  sendLink(url, title, 'フットサル作戦「' + title + '」(見るだけ・' + items.length + '件)');
+};
+let bundle = null;
+function openBundle(o) {
+  if (!o || !Array.isArray(o.t)) throw new Error('bad data');
+  const g = (Array.isArray(o.g) ? o.g : []).slice(0, 50).map(x => String(x).slice(0, 30));
+  const t = o.t.slice(0, 200).map(x => {
+    try { return Array.isArray(x) ? {g: Number(x[0]), tac: unpack(x[1])} : null; } catch { return null; }
+  }).filter(Boolean);
+  if (!t.length) throw new Error('empty');
+  bundle = {name: String(o.n || '作戦一覧').slice(0, 60), g, t};
+}
+function renderBundle() {
+  const box = $('list');
+  box.textContent = '';
+  $('sheetTitle').textContent = bundle.name;
+  const groups = [...bundle.g.map((name, i) => ({i, name})), {i: -1, name: bundle.g.length ? '未分類' : ''}];
+  for (const grp of groups) {
+    const items = bundle.t.filter(x => (x.g >= 0 && x.g < bundle.g.length ? x.g : -1) === grp.i);
+    if (!items.length) continue;
+    const wrap = document.createElement('div');
+    wrap.className = 'folder';
+    if (grp.name) {
+      const h = document.createElement('div');
+      h.className = 'folder-head';
+      const label = document.createElement('div');
+      label.style.cssText = 'font-weight:600;font-size:15px;padding:4px';
+      label.textContent = grp.name + '(' + items.length + ')';
+      h.appendChild(label);
+      wrap.appendChild(h);
+    }
+    const body = document.createElement('div');
+    if (grp.name) body.className = 'folder-body';
+    for (const it of items) {
+      const card = document.createElement('div');
+      card.className = 'item';
+      const n = document.createElement('div');
+      n.className = 'name';
+      n.textContent = it.tac.name + (T === it.tac ? '(表示中)' : '');
+      const m = document.createElement('div');
+      m.className = 'meta';
+      m.textContent = 'コマ' + it.tac.frames.length;
+      const b = document.createElement('button');
+      b.className = 'wide primary';
+      b.textContent = '▶ 見る';
+      b.onclick = () => {
+        stop();
+        T = it.tac; cur = 0;
+        renderAll();
+        $('sheet').hidden = true;
+        setTimeout(play, 300);
+      };
+      card.append(n, m, b);
+      body.appendChild(card);
+    }
+    wrap.appendChild(body);
+    box.appendChild(wrap);
+  }
+}
+$('bundleBtn').onclick = () => { stop(); renderBundle(); $('sheet').hidden = false; };
 
 function enterView() {
   viewOnly = true;
@@ -1474,11 +1562,24 @@ function enterView() {
   applyMode();
 }
 async function loadFromHash() {
-  const h = location.hash.match(/^#([tv])=([A-Za-z0-9_-]+)$/);
+  const h = location.hash.match(/^#([tvl])=([A-Za-z0-9_-]+)$/);
   if (!h) return false;
   if (viewOnly && h[1] === 't') { location.reload(); return false; }
   // 見るだけのリンクは、開き直しても同じ表示になるようにURLを残す
   if (h[1] === 't') history.replaceState(null, '', baseUrl());
+  if (h[1] === 'l') {
+    try { openBundle(await decodeObj(h[2])); }
+    catch { toast('共有リンクを読み込めませんでした'); return false; }
+    enterView();
+    stop();
+    T = bundle.t[0].tac; cur = 0;
+    resetUndo();
+    renderAll();
+    $('bundleBtn').hidden = false;
+    renderBundle();
+    $('sheet').hidden = false;
+    return true;
+  }
   let t;
   try { t = await decode(h[2]); }
   catch { toast('共有リンクを読み込めませんでした'); return false; }
@@ -1488,6 +1589,7 @@ async function loadFromHash() {
     T = t; cur = 0;
     resetUndo();
     renderAll();
+    $('bundleBtn').hidden = true;
     toast('見るだけモードで開きました');
     setTimeout(play, 700);
     return true;
@@ -1507,7 +1609,7 @@ window.addEventListener('hashchange', loadFromHash);
 
 // ---------- 起動 ----------
 (async () => {
-  if (/^#v=/.test(location.hash)) enterView();
+  if (/^#[vl]=/.test(location.hash)) enterView();
   else {
     try {
       const d = JSON.parse(localStorage.getItem(KEY_DRAFT));
